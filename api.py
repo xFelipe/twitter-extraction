@@ -43,7 +43,7 @@ def search_tweets(query: str, dt: date = None):
     search_date = dt or (datetime.now() - timedelta(days=1))
     params = {
         "query": query,
-        "tweet.fields": "author_id,text,geo,id,in_reply_to_user_id,lang,created_at,conversation_id,",
+        "tweet.fields": "author_id,text,geo,id,in_reply_to_user_id,lang,created_at,conversation_id",
         "expansions": "author_id,referenced_tweets.id,referenced_tweets.id.author_id,in_reply_to_user_id",
         "start_time": f"{search_date.year}-{search_date.month}-{search_date.day}T00:00:00z",
         "end_time": f"{search_date.year}-{search_date.month}-{search_date.day}T23:59:59z",
