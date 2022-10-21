@@ -17,11 +17,14 @@ def __validate_response(response: Response):
         logger.info(response)
     response.raise_for_status()
 
-
 def __get_header():
     auth_token = os.environ["AUTH_TOKEN"]
     return {"Authorization": "Bearer "+auth_token}
 
+def __tag_data(data: dict, query):
+    data["capture_date"] = str(datetime.now().date())
+    data["query"] = query
+    return data
 
 def __paginate(next_token: str, query: str):
     url = f"https://api.twitter.com/2/tweets/search/recent?query={query}&next_token={next_token}"
@@ -29,12 +32,10 @@ def __paginate(next_token: str, query: str):
     res = get(url, headers=__get_header())
     __validate_response(res)
 
-    response_json = json.dumps(
-        res.json(), ensure_ascii=False).encode('utf-8').decode()
+    response_json = res.json()
+    yield __tag_data(response_json, query)
 
-    yield response_json
-
-    next_token = res.json().get("meta", {}).get("next_token", "")
+    next_token = response_json.get("meta", {}).get("next_token", "")
     if (next_token):
         yield from __paginate(next_token, query)
 
@@ -53,19 +54,10 @@ def search_tweets(query: str, dt: date = None):
     res = get("https://api.twitter.com/2/tweets/search/recent",
               params=params, headers=__get_header())
     __validate_response(res)
+    response_json = res.json()
 
-    response_json = json.dumps(
-        res.json(), ensure_ascii=False).encode('utf-8').decode()
+    yield __tag_data(response_json, query)
 
-    yield response_json
-
-    next_token = res.json().get("meta", {}).get("next_token", "")
+    next_token = response_json.get("meta", {}).get("next_token", "")
     if (next_token):
         yield from __paginate(next_token, query)
-
-
-if __name__ == "__main__":
-    with open("result.json", "w") as f:
-        for result in search_tweets("Lula"):
-            f.write(result)
-            break
